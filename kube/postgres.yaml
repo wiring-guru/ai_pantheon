@@ -40,7 +40,7 @@ spec:
             - containerPort: 5432
               name: postgres
           # Secret "postgres-credentials" (not created here) must contain:
-          #   POSTGRES_USER    - database username
+          #   POSTGRES_USER    - database username (also used as PGUSER for probes)
           #   POSTGRES_PASSWORD - database password
           #   POSTGRES_DB      - initial database name
           envFrom:
@@ -48,6 +48,12 @@ spec:
                 name: postgres-credentials
             - configMapRef:
                 name: postgres-config
+          env:
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
@@ -60,12 +66,12 @@ spec:
               memory: 512Mi
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+              command: ["pg_isready"]
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+              command: ["pg_isready"]
             initialDelaySeconds: 5
             periodSeconds: 5
 
